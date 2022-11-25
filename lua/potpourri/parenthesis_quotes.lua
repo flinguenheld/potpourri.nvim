@@ -6,7 +6,7 @@ local A = vim.api
 
 
 --------------------------------------------------------------------------------------------------
-RP = {}
+PQ = {}
 
 
 --------------------------------------------------------------------------------------------------
@@ -14,7 +14,8 @@ RP = {}
 -- If found, jump to the closing pattern (with vim command)
 -- If ok, erase the text and set the insert mod
 -- --------------------------------------------------------------------------------------------------
-function RP._replace(pattern, name)
+function PQ.search_and_action(name, action)
+
 
     local cursor = A.nvim_win_get_cursor(0)
     local lines = A.nvim_buf_get_lines(0, 0, cursor[1], {})
@@ -23,6 +24,7 @@ function RP._replace(pattern, name)
     local cursor_end = nil
 
     local txt = ""
+    local pattern = ""
 
     -- Find the opening part on the cursor's left
     for i = #lines, 1, -1 do
@@ -30,6 +32,13 @@ function RP._replace(pattern, name)
         local init = nil
         if i == #lines then
             init = #lines[i] - cursor[2]
+        end
+
+        -- Search
+        if name == "parenthesis" then
+            pattern = "[%(%[%{]"
+        else
+            pattern = "[%'%\"]"
         end
 
         local s, _ = string.find(lines[i]:reverse(), pattern, init)
@@ -62,9 +71,43 @@ function RP._replace(pattern, name)
 
     elseif (cursor_start[1] ~= cursor_end[1] or cursor_start[2] ~= cursor_end[2]) then
 
-        A.nvim_buf_set_text(0, cursor_start[1] - 1, cursor_start[2] + 1, cursor_end[1] - 1, cursor_end[2], {})
-        A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2] + 1})
-        A.nvim_exec('startinsert', {})
+        if action == "replace" then
+
+            A.nvim_buf_set_text(0, cursor_start[1] - 1, cursor_start[2] + 1, cursor_end[1] - 1, cursor_end[2], {})
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2] + 1})
+            A.nvim_exec('startinsert', {})
+
+        elseif action == "delete" then
+
+            A.nvim_buf_set_text(0, cursor_start[1] - 1, cursor_start[2] + 1, cursor_end[1] - 1, cursor_end[2], {})
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2]})
+
+        elseif action == "DELETE" then
+
+            A.nvim_buf_set_text(0, cursor_start[1] - 1, cursor_start[2], cursor_end[1] - 1, cursor_end[2] + 1, {})
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2]})
+
+        elseif action == "insert_start" then
+
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2] + 1})
+            A.nvim_exec('startinsert', {})
+
+        elseif action == "INSERT_START" then
+
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_start[2]})
+            A.nvim_exec('startinsert', {})
+
+        elseif action == "insert_end" then
+
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_end[2]})
+            A.nvim_exec('startinsert', {})
+
+        elseif action == "INSERT_END" then
+
+            A.nvim_win_set_cursor(0, {cursor_start[1], cursor_end[2] + 1})
+            A.nvim_exec('startinsert', {})
+        end
+
 
     else -- cursor_start == cursor_end
 
@@ -76,15 +119,4 @@ function RP._replace(pattern, name)
 end
 
 --------------------------------------------------------------------------------------------------
--- Export
---------------------------------------------------------------------------------------------------
-RP.replace_parenthesis = function ()
-    RP._replace("[%(%[%{]", "parenthesis")
-end
-
-RP.replace_quote = function ()
-    RP._replace("[%'%\"]", "quote")
-end
-
---------------------------------------------------------------------------------------------------
-return RP
+return PQ
