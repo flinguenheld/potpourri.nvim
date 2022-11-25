@@ -26,3 +26,4 @@ map('n', '<leader>pqr', ':lua RP.replace_quote()<cr>', map_opt)
 
 map('n', '<leader>p(',  ':lua PY.close_python_function(true)<cr>', map_opt)
 map('n', '<leader>p)',  ':lua PY.close_python_function(false)<cr>', map_opt)
+map('i', '<C-p>',  '<ESC>:lua PY.close_python_function(true)<cr>', map_opt)
